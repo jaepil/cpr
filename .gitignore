@@ -37,6 +37,7 @@ install_manifest.txt
 # Custom
 build/
 !nuget/build
+include/cpr/cprver.h
 
 # Jekyll stuff
 _includes/
