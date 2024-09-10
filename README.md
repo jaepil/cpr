@@ -118,6 +118,16 @@ cmake .. -DCPR_USE_SYSTEM_CURL=ON
 cmake --build . --parallel
 sudo cmake --install .
 ```
+#### Build Static Library
+As an alternative if you want to switch between a static or shared version of cpr use ['-DBUILD_SHARED_LIBS=ON/OFF'](https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html).
+```Bash
+git clone https://github.com/libcpr/cpr.git
+cd cpr && mkdir build && cd build
+cmake .. -DCPR_USE_SYSTEM_CURL=ON -DBUILD_SHARED_LIBS=OFF
+cmake --build . --parallel
+sudo cmake --install .
+```
+
 In your `CMakeLists.txt`:
 ```cmake
 find_package(cpr REQUIRED)
@@ -155,6 +165,10 @@ If there's no package for your distribution, try making one! If you do, and it i
 For Windows, there is also a libcpr NuGet package available. Currently, x86 and x64 builds are supported with release and debug configuration.
 
 The package can be found here: [NuGet.org](https://www.nuget.org/packages/libcpr/)
+
+### Port for macOS
+
+On macOS you may install cpr via [MacPorts.org](https://ports.macports.org/port/cpr) (arm64, x86_64, powerpc)
 
 ## Requirements
 
