@@ -13,7 +13,8 @@
 | Release  | Min. C++ Standard | Status | Notes |
 |----------|-------------------|--------|-------|
 | master   | `cpp17` | ![alt text][preview] | |
-| 1.10.x   | `cpp17` | ![alt text][supported] | |
+| 1.11.x   | `cpp17` | ![alt text][supported] | |
+| 1.10.x   | `cpp17` | ![alt text][unsupported] | |
 | 1.9.x    | `cpp11` | ![alt text][supported] | Supported until 01.01.2025 |
 | <= 1.8.x | `cpp11` | ![alt text][unsupported] | |
 
@@ -93,7 +94,7 @@ Add the following to your `CMakeLists.txt`.
 ```cmake
 include(FetchContent)
 FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
-                         GIT_TAG 3b15fa82ea74739b574d705fea44959b58142eb8) # Replace with your desired git commit from: https://github.com/libcpr/cpr/releases
+                         GIT_TAG bb01c8db702fb41e5497aee9c0559ddf4bf13749) # Replace with your desired git commit from: https://github.com/libcpr/cpr/releases
 FetchContent_MakeAvailable(cpr)
 ```
 
@@ -177,6 +178,7 @@ The only explicit requirements are:
 * a `C++17` compatible compiler such as Clang or GCC. The minimum required version of GCC is unknown, so if anyone has trouble building this library with a specific version of GCC, do let us know
 * in case you only have a `C++11` compatible compiler available, all versions below cpr 1.9.x are for you. The 1.10.0 release of cpr switches to `C++17` as a requirement.
 * If you would like to perform https requests `OpenSSL` and its development libraries are required.
+* If you do not use the build in version of [curl](https://github.com/curl/curl) but instead use your systems version, make sure you use a version `>= 7.64.0`. Lower versions are not supported. This means you need Debian `>= 10` or Ubuntu `>= 20.04 LTS`.
 
 ## Building cpr - Using vcpkg
 
