@@ -1,9 +1,9 @@
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <stdexcept>
 #include <string>
 
@@ -262,7 +262,7 @@ TEST(MultipleGetTests, HeaderChangeMultipleGetTest) {
         EXPECT_EQ(200, response.status_code);
         EXPECT_EQ(ErrorCode::OK, response.error.code);
     }
-    session.SetHeader(Header{{"key", "value"}});
+    session.SetHeader(Header{{"key", "value"}, {"lorem", "ipsum"}});
     {
         Response response = session.Get();
         std::string expected_text{"Header reflect GET"};
@@ -270,6 +270,19 @@ TEST(MultipleGetTests, HeaderChangeMultipleGetTest) {
         EXPECT_EQ(url, response.url);
         EXPECT_EQ(std::string{"text/html"}, response.header["content-type"]);
         EXPECT_EQ(std::string{"value"}, response.header["key"]);
+        EXPECT_EQ(std::string{"ipsum"}, response.header["lorem"]);
+        EXPECT_EQ(200, response.status_code);
+        EXPECT_EQ(ErrorCode::OK, response.error.code);
+    }
+    Header& headerMap = session.GetHeader();
+    headerMap.erase("key");
+    {
+        Response response = session.Get();
+        std::string expected_text{"Header reflect GET"};
+        EXPECT_EQ(expected_text, response.text);
+        EXPECT_EQ(url, response.url);
+        EXPECT_EQ(std::string{"text/html"}, response.header["content-type"]);
+        EXPECT_EQ(std::string{"ipsum"}, response.header["lorem"]);
         EXPECT_EQ(200, response.status_code);
         EXPECT_EQ(ErrorCode::OK, response.error.code);
     }
@@ -725,6 +738,49 @@ TEST(DigestTests, SetDigestTest) {
     EXPECT_EQ(ErrorCode::OK, response.error.code);
 }
 
+TEST(AnyAuthTests, SetAnyTest) {
+    Url url{server->GetBaseUrl() + "/digest_auth.html"};
+    Session session;
+    session.SetUrl(url);
+    session.SetAuth({"user", "password", AuthMode::ANY});
+    Response response = session.Get();
+    std::string expected_text{"Header reflect GET"};
+    EXPECT_EQ(expected_text, response.text);
+    EXPECT_EQ(url, response.url);
+    EXPECT_EQ(std::string{"text/html"}, response.header["content-type"]);
+    EXPECT_EQ(200, response.status_code);
+    EXPECT_EQ(ErrorCode::OK, response.error.code);
+}
+
+TEST(AnyAuthTests, SetAnySafeTest) {
+    Authentication auth = {"user", "password", AuthMode::ANYSAFE};
+    {
+        Url url{server->GetBaseUrl() + "/digest_auth.html"};
+        Session session;
+        session.SetUrl(url);
+        session.SetAuth(auth);
+        Response response = session.Get();
+        std::string expected_text{"Header reflect GET"};
+        EXPECT_EQ(expected_text, response.text);
+        EXPECT_EQ(url, response.url);
+        EXPECT_EQ(std::string{"text/html"}, response.header["content-type"]);
+        EXPECT_EQ(200, response.status_code);
+        EXPECT_EQ(ErrorCode::OK, response.error.code);
+    }
+    {
+        Url url{server->GetBaseUrl() + "/basic_auth.html"};
+        Session session;
+        session.SetUrl(url);
+        session.SetAuth(auth);
+        Response response = session.Get();
+        EXPECT_EQ(std::string{"Unauthorized"}, response.text);
+        EXPECT_EQ(url, response.url);
+        EXPECT_EQ(std::string{"text/plain"}, response.header["content-type"]);
+        EXPECT_EQ(401, response.status_code);
+        EXPECT_EQ(ErrorCode::OK, response.error.code);
+    }
+}
+
 TEST(UserAgentTests, SetUserAgentTest) {
     Url url{server->GetBaseUrl() + "/header_reflect.html"};
     UserAgent userAgent{"Test User Agent"};
@@ -765,8 +821,8 @@ TEST(CookiesTests, BasicCookiesTest) {
     Cookies res_cookies{response.cookies};
     std::string expected_text{"Basic Cookies"};
     cpr::Cookies expectedCookies{
-            {"SID", "31d4d96e407aad42", "127.0.0.1", false, "/", true, std::chrono::system_clock::time_point{} + std::chrono::seconds(3905119080)},
-            {"lang", "en-US", "127.0.0.1", false, "/", true, std::chrono::system_clock::time_point{} + std::chrono::seconds(3905119080)},
+            {"SID", "31d4d96e407aad42", "127.0.0.1", false, "/", true, HttpServer::GetCookieExpiresIn100HoursTimePoint()},
+            {"lang", "en-US", "127.0.0.1", false, "/", true, HttpServer::GetCookieExpiresIn100HoursTimePoint()},
     };
     EXPECT_EQ(std::string{"text/html"}, response.header["content-type"]);
     EXPECT_EQ(200, response.status_code);
@@ -992,9 +1048,34 @@ TEST(DifferentMethodTests, MultipleDeleteHeadPutGetPostTest) {
     Url url{server->GetBaseUrl() + "/header_reflect.html"};
     Url urlPost{server->GetBaseUrl() + "/post_reflect.html"};
     Url urlPut{server->GetBaseUrl() + "/put.html"};
+    Url urlMultipartPost{server->GetBaseUrl() + "/post_file_upload.html"};
     Session session;
     for (size_t i = 0; i < 10; ++i) {
         {
+            session.RemoveContent();
+            session.SetUrl(url);
+            Response response = session.Get();
+            std::string expected_text{"Header reflect GET"};
+            EXPECT_EQ(expected_text, response.text);
+            EXPECT_EQ(url, response.url);
+            EXPECT_EQ(200, response.status_code);
+            EXPECT_EQ(ErrorCode::OK, response.error.code);
+        }
+        {
+            session.RemoveContent();
+            session.SetUrl(urlMultipartPost);
+            std::string fileContentsBinary{"this is a binary payload"};
+            std::string fileExtension = ".myfile";
+            session.SetMultipart(cpr::Multipart{{"files", cpr::Buffer{fileContentsBinary.begin(), fileContentsBinary.end(), "myfile.jpg"}}, {"file_types", "[\"" + fileExtension + "\"]"}});
+            Response response = session.Post();
+            std::string expected_text{"{\n  \"files\": \"myfile.jpg=this is a binary payload\",\n  \"file_types\": \"[\".myfile\"]\"\n}"};
+            EXPECT_EQ(expected_text, response.text);
+            EXPECT_EQ(urlMultipartPost, response.url);
+            EXPECT_EQ(201, response.status_code);
+            EXPECT_EQ(ErrorCode::OK, response.error.code);
+        }
+        {
+            session.RemoveContent();
             session.SetUrl(url);
             Response response = session.Delete();
             std::string expected_text{"Header reflect DELETE"};
@@ -1014,6 +1095,7 @@ TEST(DifferentMethodTests, MultipleDeleteHeadPutGetPostTest) {
             EXPECT_EQ(ErrorCode::OK, response.error.code);
         }
         {
+            session.RemoveContent();
             session.SetUrl(url);
             Response response = session.Get();
             std::string expected_text{"Header reflect GET"};
@@ -1037,6 +1119,7 @@ TEST(DifferentMethodTests, MultipleDeleteHeadPutGetPostTest) {
             EXPECT_EQ(ErrorCode::OK, response.error.code);
         }
         {
+            session.RemoveContent();
             session.SetUrl(url);
             Response response = session.Head();
             std::string expected_text{"Header reflect HEAD"};
