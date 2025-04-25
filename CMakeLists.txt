@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
-project(cpr VERSION 1.11.1 LANGUAGES CXX)
+project(cpr VERSION 1.11.2 LANGUAGES CXX)
 
 math(EXPR cpr_VERSION_NUM "${cpr_VERSION_MAJOR} * 0x10000 + ${cpr_VERSION_MINOR} * 0x100 + ${cpr_VERSION_PATCH}" OUTPUT_FORMAT HEXADECIMAL)
 configure_file("${cpr_SOURCE_DIR}/cmake/cprver.h.in" "${cpr_BINARY_DIR}/cpr_generated_includes/cpr/cprver.h")
 
-# Only change the folder behaviour if cpr is not a subproject
+# Only change the folder behavior if cpr is not a subproject
 if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
@@ -82,7 +82,6 @@ if (MSVC)
         message(STATUS "Build windows dynamic libs.")
     else()
         # Add this to build windows pure static library.
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
         message(STATUS "Build windows static libs.")
     endif()
 endif()
