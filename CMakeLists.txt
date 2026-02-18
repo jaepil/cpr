@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.15)
-project(cpr VERSION 1.12.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.18)
+project(cpr VERSION 1.15.0 LANGUAGES CXX)
 
 math(EXPR cpr_VERSION_NUM "${cpr_VERSION_MAJOR} * 0x10000 + ${cpr_VERSION_MINOR} * 0x100 + ${cpr_VERSION_PATCH}" OUTPUT_FORMAT HEXADECIMAL)
 configure_file("${cpr_SOURCE_DIR}/cmake/cprver.h.in" "${cpr_BINARY_DIR}/cpr_generated_includes/cpr/cprver.h")
@@ -56,7 +56,9 @@ cpr_option(CPR_CURL_NOSIGNAL "Set to ON to disable use of signals in libcurl." O
 cpr_option(CURL_VERBOSE_LOGGING "Curl verbose logging during building curl" OFF)
 cpr_option(CPR_USE_SYSTEM_GTEST "If ON, this project will look in the system paths for an installed gtest library. If none is found it will use the built-in one." OFF)
 cpr_option(CPR_USE_SYSTEM_CURL "If enabled we will use the curl lib already installed on this system." OFF)
-cpr_option(CPR_USE_SYSTEM_LIB_PSL "Since curl 8.13 it depends on libpsl. If enabled we will use the psl lib already installed on this system. Else meson is required as build dependency." ${CPR_USE_SYSTEM_CURL})
+cpr_option(CPR_USE_EXISTING_CURL_TARGET "Use an existing libcurl cmake target instead of having the cpr project source the dependency itself." OFF)
+cpr_option(CPR_CURL_USE_LIBPSL "Since curl 8.13 curl depends on libpsl (https://everything.curl.dev/build/deps.html#libpsl). By default cpr keeps this as a secure default enabled wich in turn requires meson as build dependency. If set to OFF, psl support inside curl will be disabled." ON)
+cpr_option(CPR_USE_SYSTEM_LIB_PSL "If enabled we will use the psl lib already installed on this system. Else meson is required as build dependency. Only relevant in case 'CPR_CURL_USE_LIBPSL' is set to ON." ${CPR_USE_SYSTEM_CURL})
 cpr_option(CPR_ENABLE_CURL_HTTP_ONLY "If enabled we will only use the HTTP/HTTPS protocols from CURL. If disabled, all the CURL protocols are enabled. This is useful if your project uses libcurl and you need support for other CURL features e.g. sending emails." ON)
 cpr_option(CPR_ENABLE_SSL "Enables or disables the SSL backend. Required to perform HTTPS requests." ON)
 cpr_option(CPR_FORCE_OPENSSL_BACKEND "Force to use the OpenSSL backend. If CPR_FORCE_OPENSSL_BACKEND, CPR_FORCE_DARWINSSL_BACKEND, CPR_FORCE_MBEDTLS_BACKEND, and CPR_FORCE_WINSSL_BACKEND are set to to OFF, cpr will try to automatically detect the best available SSL backend (WinSSL - Windows, OpenSSL - Linux, DarwinSSL - Mac ...)." OFF)
@@ -189,7 +191,9 @@ find_package(OpenSSL REQUIRED)
 endif()
 
 # Curl configuration
-if(CPR_USE_SYSTEM_CURL)
+if(CPR_USE_EXISTING_CURL_TARGET)
+    message(STATUS "cpr skipping management of curl dependency (CPR_USE_EXISTING_CURL_TARGET is set to ON).")
+elseif(CPR_USE_SYSTEM_CURL)
     if(CPR_ENABLE_SSL)
         find_package(CURL COMPONENTS HTTP HTTPS)
         if(CURL_FOUND)
@@ -297,7 +301,8 @@ else()
     endif()
 
     # Since curl 8.13, curl depends on lib psl
-    if(NOT ${CPR_USE_SYSTEM_LIB_PSL})
+    set(CURL_USE_LIBPSL ${CPR_CURL_USE_LIBPSL} CACHE INTERNAL "" FORCE)
+    if(CPR_CURL_USE_LIBPSL AND NOT CPR_USE_SYSTEM_LIB_PSL)
         include(libpsl)
     endif()
 
@@ -379,8 +384,8 @@ if(CPR_BUILD_TESTS)
     FetchContent_Declare(mongoose 
                          URL                    https://github.com/cesanta/mongoose/archive/7.7.tar.gz
                          URL_HASH               SHA256=4e5733dae31c3a81156af63ca9aa3a6b9b736547f21f23c3ab2f8e3f1ecc16c0 # the hash for 7.7.tar.gz
-                         USES_TERMINAL_DOWNLOAD TRUE)   # <---- This is needed only for Ninja to show download progress
-    # We can not use FetchContent_MakeAvailable, since we need to patch mongoose to use CMake
+                         USES_TERMINAL_DOWNLOAD TRUE # This is needed only for Ninja to show download progress
+                         SOURCE_SUBDIR          "?") # Nonexistent directory to prevent FetchContent_MakeAvailable from calling add_subdirectory and duplicating the mongoose target
     if (NOT mongoose_POPULATED)
         FetchContent_MakeAvailable(mongoose)
 

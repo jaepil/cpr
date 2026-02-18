@@ -1,5 +1,5 @@
-#ifndef CPR_CURL_HOLDER_H
-#define CPR_CURL_HOLDER_H
+#ifndef CPR_CURLHOLDER_H
+#define CPR_CURLHOLDER_H
 
 #include <array>
 #include <curl/curl.h>
@@ -33,12 +33,12 @@ struct CurlHolder {
     std::array<char, CURL_ERROR_SIZE> error{};
 
     CurlHolder();
-    CurlHolder(const CurlHolder& other) = default;
-    CurlHolder(CurlHolder&& old) noexcept = default;
+    CurlHolder(const CurlHolder& other) = delete;
+    CurlHolder(CurlHolder&& old) noexcept;
     ~CurlHolder();
 
-    CurlHolder& operator=(CurlHolder&& old) noexcept = default;
-    CurlHolder& operator=(const CurlHolder& other) = default;
+    CurlHolder& operator=(const CurlHolder& other) = delete;
+    CurlHolder& operator=(CurlHolder&& old) noexcept;
 
     /**
      * Uses curl_easy_escape(...) for escaping the given string.

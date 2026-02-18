@@ -143,7 +143,7 @@ void Session::SetBearer(const Bearer& token) {
 
 Session::Session() : curl_(new CurlHolder()) {
     // Set up some sensible defaults
-    curl_version_info_data* version_info = curl_version_info(CURLVERSION_NOW);
+    const curl_version_info_data* version_info = curl_version_info(CURLVERSION_NOW);
     const std::string version = "curl/" + std::string{version_info->version};
     curl_easy_setopt(curl_->handle, CURLOPT_USERAGENT, version.c_str());
     SetRedirect(Redirect());
@@ -233,7 +233,7 @@ void Session::prepareCommon() {
     // Set Content:
     prepareBodyPayloadOrMultipart();
 
-    if (!cbs_->writecb_.callback) {
+    if (!cbs_->writecb_.callback && !cbs_->ssecb_.callback) {
         curl_easy_setopt(curl_->handle, CURLOPT_WRITEFUNCTION, cpr::util::writeFunction);
         curl_easy_setopt(curl_->handle, CURLOPT_WRITEDATA, &response_string_);
     }
@@ -320,6 +320,12 @@ void Session::SetWriteCallback(const WriteCallback& write) {
     curl_easy_setopt(curl_->handle, CURLOPT_WRITEFUNCTION, cpr::util::writeUserFunction);
     cbs_->writecb_ = write;
     curl_easy_setopt(curl_->handle, CURLOPT_WRITEDATA, &cbs_->writecb_);
+}
+
+void Session::SetServerSentEventCallback(const ServerSentEventCallback& sse) {
+    curl_easy_setopt(curl_->handle, CURLOPT_WRITEFUNCTION, cpr::util::writeSSEFunction);
+    cbs_->ssecb_ = sse;
+    curl_easy_setopt(curl_->handle, CURLOPT_WRITEDATA, &cbs_->ssecb_);
 }
 
 void Session::SetProgressCallback(const ProgressCallback& progress) {
@@ -528,6 +534,20 @@ void Session::SetSslOptions(const SslOptions& options) {
             curl_easy_setopt(curl_->handle, CURLOPT_SSLCERTTYPE, options.cert_type.c_str());
         }
     }
+#if SUPPORT_CURLOPT_SSLCERT_BLOB
+    else if (!options.cert_blob.empty()) {
+        std::string cert_blob(options.cert_blob);
+        curl_blob blob{};
+        // NOLINTNEXTLINE (readability-container-data-pointer)
+        blob.data = &cert_blob[0];
+        blob.len = cert_blob.length();
+        blob.flags = CURL_BLOB_COPY;
+        curl_easy_setopt(curl_->handle, CURLOPT_SSLCERT_BLOB, &blob);
+        if (!options.cert_type.empty()) {
+            curl_easy_setopt(curl_->handle, CURLOPT_SSLCERTTYPE, options.cert_type.c_str());
+        }
+    }
+#endif
     if (!options.key_file.empty()) {
         curl_easy_setopt(curl_->handle, CURLOPT_SSLKEY, options.key_file.c_str());
         if (!options.key_type.empty()) {
@@ -594,6 +614,16 @@ void Session::SetSslOptions(const SslOptions& options) {
     if (!options.ca_info.empty()) {
         curl_easy_setopt(curl_->handle, CURLOPT_CAINFO, options.ca_info.c_str());
     }
+#if SUPPORT_CURLOPT_CAINFO_BLOB
+    if (!options.ca_info_blob.empty()) {
+        std::string cainfo_blob(options.ca_info_blob);
+        curl_blob blob{};
+        blob.data = cainfo_blob.data();
+        blob.len = cainfo_blob.length();
+        blob.flags = CURL_BLOB_COPY;
+        curl_easy_setopt(curl_->handle, CURLOPT_CAINFO_BLOB, &blob);
+    }
+#endif
     if (!options.ca_path.empty()) {
         curl_easy_setopt(curl_->handle, CURLOPT_CAPATH, options.ca_path.c_str());
     }
@@ -1055,6 +1085,7 @@ void Session::SetOption(const HeaderCallback& header) { SetHeaderCallback(header
 void Session::SetOption(const WriteCallback& write) { SetWriteCallback(write); }
 void Session::SetOption(const ProgressCallback& progress) { SetProgressCallback(progress); }
 void Session::SetOption(const DebugCallback& debug) { SetDebugCallback(debug); }
+void Session::SetOption(const ServerSentEventCallback& sse) { SetServerSentEventCallback(sse); }
 void Session::SetOption(const Url& url) { SetUrl(url); }
 void Session::SetOption(const Parameters& parameters) { SetParameters(parameters); }
 void Session::SetOption(Parameters&& parameters) { SetParameters(std::move(parameters)); }
@@ -1094,7 +1125,7 @@ void Session::SetOption(const LocalPortRange& local_port_range) { SetLocalPortRa
 void Session::SetOption(const HttpVersion& version) { SetHttpVersion(version); }
 void Session::SetOption(const Range& range) { SetRange(range); }
 void Session::SetOption(const MultiRange& multi_range) { SetMultiRange(multi_range); }
-void Session::SetOption(const ReserveSize& reserve_size) { SetReserveSize(reserve_size.size); }
+void Session::SetOption(const ReserveSize& reserve_size) { SetReserveSize(reserve_size); }
 void Session::SetOption(const AcceptEncoding& accept_encoding) { SetAcceptEncoding(accept_encoding); }
 void Session::SetOption(AcceptEncoding&& accept_encoding) { SetAcceptEncoding(std::move(accept_encoding)); }
 void Session::SetOption(const ConnectionPool& pool) { SetConnectionPool(pool); }

@@ -4,6 +4,7 @@
 #include "cpr/cprtypes.h"
 #include "cpr/curlholder.h"
 #include "cpr/secure_string.h"
+#include "cpr/sse.h"
 #include <algorithm>
 #include <cctype>
 #include <chrono>
@@ -17,7 +18,7 @@
 #include <type_traits>
 #include <vector>
 
-#if defined(_Win32)
+#ifdef _Win32
 #include <Windows.h>
 #else
 #ifdef __clang__
@@ -51,7 +52,7 @@ enum class CurlHTTPCookieField : uint8_t {
 Cookies parseCookies(curl_slist* raw_cookies) {
     const int CURL_HTTP_COOKIE_SIZE = static_cast<int>(CurlHTTPCookieField::Value) + 1;
     Cookies cookies;
-    for (curl_slist* nc = raw_cookies; nc; nc = nc->next) {
+    for (const curl_slist* nc = raw_cookies; nc; nc = nc->next) {
         std::vector<std::string> tokens = cpr::util::split(nc->data, '\t');
         while (tokens.size() < CURL_HTTP_COOKIE_SIZE) {
             tokens.emplace_back("");
@@ -135,9 +136,9 @@ size_t headerUserFunction(char* ptr, size_t size, size_t nmemb, const HeaderCall
     return (*header)({ptr, size}) ? size : 0;
 }
 
-size_t writeFunction(char* ptr, size_t size, size_t nmemb, std::string* data) {
+size_t writeFunction(char* ptr, size_t size, size_t nmemb, void* data) {
     size *= nmemb;
-    data->append(ptr, size);
+    static_cast<std::string*>(data)->append(ptr, size);
     return size;
 }
 
@@ -150,6 +151,11 @@ size_t writeFileFunction(char* ptr, size_t size, size_t nmemb, std::ofstream* fi
 size_t writeUserFunction(char* ptr, size_t size, size_t nmemb, const WriteCallback* write) {
     size *= nmemb;
     return (*write)({ptr, size}) ? size : 0;
+}
+
+size_t writeSSEFunction(char* ptr, size_t size, size_t nmemb, ServerSentEventCallback* sse) {
+    size *= nmemb;
+    return sse->handleData({ptr, size}) ? size : 0;
 }
 
 int debugUserFunction(CURL* /*handle*/, curl_infotype type, char* data, size_t size, const DebugCallback* debug) {
