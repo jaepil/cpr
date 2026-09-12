@@ -25,11 +25,11 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v2.1
+      uses: jwlawson/actions-setup-cmake@v2.2
       with:
         cmake-version: '3.22.x'
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -62,11 +62,11 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v2.1
+      uses: jwlawson/actions-setup-cmake@v2.2
       with:
         cmake-version: '3.22.x'
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -93,11 +93,11 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v2.1
+      uses: jwlawson/actions-setup-cmake@v2.2
       with:
         cmake-version: '3.22.x'
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -122,7 +122,7 @@ jobs:
     - name: Install Dependencies
       run: dnf install -y gcc g++ clang git make openssl-devel libcurl-devel cmake libpsl-devel libunistring-devel meson
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -152,7 +152,7 @@ jobs:
     - name: Install Dependencies
       run: dnf install -y gcc g++ clang git make openssl-devel libcurl-devel cmake libpsl-devel libunistring-devel meson
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -178,7 +178,7 @@ jobs:
     - name: Install Dependencies
       run: dnf install -y git gcc g++ make openssl-devel cmake libunistring-devel
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -208,7 +208,7 @@ jobs:
     - name: Install Dependencies
       run: dnf install -y gcc g++ clang git make openssl-devel libasan libubsan liblsan libtsan cmake libpsl-devel libunistring-devel meson
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -229,13 +229,13 @@ jobs:
         buildType: [Debug, Release]
     runs-on: windows-latest
     steps:
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
     - name: Install meson
       run: pip install meson
     - name: Setup MSVC environment
       uses: ilammy/msvc-dev-cmd@v1
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CMAKE_GENERATOR: "Visual Studio 17 2022"
@@ -252,7 +252,7 @@ jobs:
   windows-msvc-openssl:
     runs-on: windows-latest
     steps:
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
     - name: Install meson
       run: pip install meson
     - name: Setup MSVC environment
@@ -260,7 +260,7 @@ jobs:
     - name: Install OpenSSL
       run: choco install openssl -y
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CMAKE_GENERATOR: "Visual Studio 17 2022"
@@ -284,7 +284,7 @@ jobs:
     - name: Install libpsl
       run: brew install libpsl
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -306,7 +306,7 @@ jobs:
     - name: Install libpsl
       run: brew install libpsl
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -331,7 +331,7 @@ jobs:
     - name: Install libpsl
       run: brew install libpsl
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON
@@ -363,7 +363,7 @@ jobs:
     - name: Install libpsl
       run: brew install libpsl
     - name: Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: "Build & Test"
       env:
         CPR_BUILD_TESTS: ON

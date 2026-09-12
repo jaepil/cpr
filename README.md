@@ -48,7 +48,7 @@ And here's [less functional, more complicated code, without cpr](https://gist.gi
 ## Documentation
 
 [![Documentation](https://img.shields.io/badge/docs-online-informational?style=for-the-badge&link=https://docs.libcpr.dev/)](https://docs.libcpr.dev/)
-You can find the latest documentation [here](https://docs.libcpr.dev/). It's a work in progress, but it should give you a better idea of how to use the library than the [tests](https://github.com/libcpr/cpr/tree/master/test) currently do.
+You can find the latest documentation [here](https://docs.libcpr.dev/). The same content is maintained in the [libcpr/docs](https://github.com/libcpr/docs) repository if you need an offline copy or want to build the docs locally. It's a work in progress, but it should give you a better idea of how to use the library than the [tests](https://github.com/libcpr/cpr/tree/master/test) currently do.
 
 ## Features
 
@@ -94,7 +94,7 @@ Add the following to your `CMakeLists.txt`.
 ```cmake
 include(FetchContent)
 FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
-                         GIT_TAG f091b2c061b307ee89b164c39976fc9202a1c79d.12.0) # Replace with your desired git commit from: https://github.com/libcpr/cpr/releases
+                         GIT_TAG f091b2c061b307ee89b164c39976fc9202a1c79d) # Replace with your desired git commit from: https://github.com/libcpr/cpr/releases
 FetchContent_MakeAvailable(cpr)
 ```
 
@@ -147,47 +147,8 @@ ctest -VV # -VV is optional since it enables verbose output
 ```
 
 ### Bazel
-`cpr` can be added as an extension by adding the following lines to your bazel MODULE file (tested with Bazel 8). Edit the versions as needed.
-```starlark
-bazel_dep(name = "curl", version = "8.8.0.bcr.3")
-git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-git_repository(
-    name = "cpr",
-    build_file = "//path/to/build:cpr.BUILD",
-    commit = "516cb3e5f4e38bede088f69fcf122c6089e38f00",
-    remote = "https://github.com/libcpr/cpr.git",
-    patches = ["//path/to/patch:cpr.PATCH"]
-)
-```
+`cpr` is available as a module from the [Bazel Central Registry](https://registry.bazel.build/). Please refer to the [module page](https://registry.bazel.build/modules/cpr) on how to use it within your project.
 
-```starlark
-// cpr.BUILD
-cc_library(
-    name = "cpr",
-    hdrs = glob(["include/**/*.h"]),
-    includes = ["include"],
-    visibility = ["//visibility:public"],
-
-    srcs = glob(["cpr/**/*.cpp"]),
-    deps = [
-        "@curl//:curl"
-    ],
-)
-```
-
-```starlark
-// Remove this line: cpr.PATCH
---- include/cpr/cpr.h
-+++ include/cpr/cpr.h
-@@ -10,7 +10,6 @@
- #include "cpr/connection_pool.h"
- #include "cpr/cookies.h"
- #include "cpr/cprtypes.h"
--#include "cpr/cprver.h"
- #include "cpr/curl_container.h"
- #include "cpr/curlholder.h"
- #include "cpr/error.h"
-```
 
 ### Packages for Linux Distributions
 
